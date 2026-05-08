@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>住宅ローン借入可能額</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<style>
+body{
+  font-family:-apple-system;
+  margin:0;
+  padding:16px;
+  background:#f2f2f7;
+}
+h1{
+  font-size:22px;
+  margin-bottom:16px;
+}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  margin-bottom:16px;
+}
+label{
+  font-size:14px;
+  display:block;
+  margin-top:10px;
+}
+input{
+  width:100%;
+  padding:10px;
+  margin-top:4px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:16px;
+  box-sizing:border-box;
+}
+button{
+  width:100%;
+  margin-top:16px;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  background:#007aff;
+  color:#fff;
+  font-size:17px;
+  font-weight:600;
+}
+.result{
+  font-size:16px;
+  line-height:1.6;
+}
+.small{
+  font-size:12px;
+  color:#666;
+}
+</style>
+</head>
+<body>
+
+<h1>住宅ローン借入可能額</h1>
+
+<div class="card">
+  <label>年収（万円）</label>
+  <input id="income" type="number" value="600">
+
+  <label>返済負担率（％）<span class="small">（空欄なら自動）</span></label>
+  <input id="ratio" type="number" placeholder="例：35">
+
+  <label>金利（％・年）</label>
+  <input id="rate" type="number" value="0.6">
+
+  <label>返済期間（年）</label>
+  <input id="years" type="number" value="35">
+
+  <label>他のローン返済（月額・円）</label>
+  <input id="other" type="number" value="0">
+
+  <button onclick="calc()">借入可能額を計算</button>
+</div>
+
+<div class="card">
+  <div id="result" class="result">
+    年収などを入力して「借入可能額を計算」を押してください。
+  </div>
+</div>
+
+<script>
+function autoRatio(incomeMan){
+  if(incomeMan < 400) return 30;
+  if(incomeMan < 700) return 35;
+  return 40;
+}
+
+function calc(){
+  const incomeMan = Number(document.getElementById('income').value || 0);
+  const incomeYen = incomeMan * 10000;
+  if(!incomeYen){
+    document.getElementById('result').innerHTML = '年収を入力してください。';
+    return;
+  }
+
+  let ratio = Number(document.getElementById('ratio').value);
+  if(!ratio) ratio = autoRatio(incomeMan);
+
+  const rateYear = Number(document.getElementById('rate').value || 0);
+  const years = Number(document.getElementById('years').value || 0);
+  const other = Number(document.getElementById('other').value || 0);
+
+  if(rateYear <= 0 || years <= 0){
+    document.getElementById('result').innerHTML = '金利と返済期間を確認してください。';
+    return;
+  }
+
+  const r = rateYear / 100 / 12;
+  const n = years * 12;
+  const monthlyLimit = incomeYen * (ratio/100) / 12 - other;
+  if(monthlyLimit <= 0){
+    document.getElementById('result').innerHTML = '他のローンが多すぎて借入余力がありません。';
+    return;
+  }
+
+  const pow = Math.pow(1 + r, n);
+  const principal = monthlyLimit * (pow - 1) / (r * pow);
+
+  const fmt = v => v.toLocaleString('ja-JP');
+
+  document.getElementById('result').innerHTML =
+    '想定返済負担率：' + ratio.toFixed(1) + '%<br>' +
+    '月返済可能額：約 ' + fmt(Math.round(monthlyLimit)) + ' 円<br>' +
+    '借入可能額：約 ' + fmt(Math.round(principal)) + ' 円<br>' +
+    '<span class="small">※概算です。実際の審査結果とは異なります。</span>';
+}
+</script>
+
+</body>
+</html>
